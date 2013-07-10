@@ -5,7 +5,7 @@
 		"predis/predis": "0.8.*@dev",
 		"galvani/simplepie": ">=1.3.3"
 	},
-	"version": "0.2.9",
+	"version": "0.2.10",
 	"description": "php-redis caching for simple-pie base on predis/predis",
 	"authors": [{
             "name": "Jan Kozak",

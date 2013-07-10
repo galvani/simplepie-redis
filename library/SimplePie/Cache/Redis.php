@@ -18,7 +18,7 @@
  *
  * For example, `redis://localhost:6379/?timeout=3600&prefix=sp_&dbIndex=0` will
  * connect to redis on `localhost` on port 6379. All tables will be
- * prefixed with `sp_` and data will expire after 3600 seconds
+ * prefixed with `simple_primary-` and data will expire after 3600 seconds
  *
  * @package SimplePie
  * @subpackage Caching
@@ -60,8 +60,8 @@ class SimplePie_Cache_Redis implements SimplePie_Cache_Base {
 	 * @param string $name Unique ID for the cache
 	 * @param string $type Either TYPE_FEED for SimplePie data, or TYPE_IMAGE for image data
 	 */
-	public function __construct(Predis\Client $cache, $name, $type, $options = null) {
-		$this->cache = $cache;
+	public function __construct($name, $type, $options = null) {
+		$this->cache = \flow\simple\cache\Redis::getRedisClientInstance();
 
 		if (!is_null($options)) {
 			$this->options = $options;
@@ -73,6 +73,13 @@ class SimplePie_Cache_Redis implements SimplePie_Cache_Base {
 		}
 
 		$this->name = $this->options . $name;
+	}
+
+	/**
+	 * @param \Predis\Client $cache
+	 */
+	public function setRedisClient(\Predis\Client $cache) {
+		$this->cache = $cache;
 	}
 
 	/**
@@ -99,7 +106,6 @@ class SimplePie_Cache_Redis implements SimplePie_Cache_Base {
 	 * @return array Data for SimplePie::$data
 	 */
 	public function load() {
-
 		$data = $this->cache->get($this->name);
 
 		if ($data !== false) {
@@ -118,7 +124,6 @@ class SimplePie_Cache_Redis implements SimplePie_Cache_Base {
 		$data = $this->cache->get($this->name);
 
 		if ($data !== false) {
-			// essentially ignore the mtime because Memcache expires on its own
 			return time();
 		}
 
@@ -137,7 +142,7 @@ class SimplePie_Cache_Redis implements SimplePie_Cache_Base {
 		if ($data !== false) {
 			$return = $this->cache->set($this->name, $data);
 			if ($this->options['expire']) {
-				return $this->cache->expire($this->name, $this->options['expire']);
+				return $this->cache->expire($this->name);
 			}
 			return $return;
 		}
@@ -151,7 +156,7 @@ class SimplePie_Cache_Redis implements SimplePie_Cache_Base {
 	 * @return bool Success status
 	 */
 	public function unlink() {
-		return $this->cache->delete($this->name, 0);
+		return $this->cache->set($this->name, null);
 	}
 
 }
